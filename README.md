@@ -1,1 +1,1 @@
-# theResistance
+# The Resistance Game
