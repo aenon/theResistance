@@ -53,17 +53,33 @@
         //
         // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
 
+        // const firebaseConfig = {
+        //   apiKey: "AIzaSyCsf9cx60GhYhpgC_zkyw_6ecNIka6cL0w",
+        //   authDomain: "huskygames-82dbe.firebaseapp.com",
+        //   databaseURL: "https://huskygames-82dbe.firebaseio.com",
+        //   projectId: "huskygames-82dbe",
+        //   storageBucket: "huskygames-82dbe.appspot.com",
+        //   messagingSenderId: "1025911143885",
+        //   appId: "1:1025911143885:web:314fa682ab62fc0bff1884",
+        //   measurementId: "G-N542RJCD69"
+        // };
+        // firebase.initializeApp(firebaseConfig);
+        
+        // const app = firebase.app();
         const db = firebase.firestore();
-        // db.collection("games").get().then((querySnapshot) => {
-        //   querySnapshot.forEach((doc) => {
-        //     console.log(`${doc.id} => ${doc.data()}`);
-        //   });
-        // });
+        const query = db.collection("games")
+        
+        query.get().then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            console.log(doc.data());
+            // console.log(`${doc.id} => ${doc.data()}`);
+          });
+        });
 
         try {
-          let app = firebase.app();
-          let features = ['auth', 'database', 'messaging', 'storage', 'firestore'].filter(feature => typeof app[feature] === 'function');
-          document.getElementById('load').innerHTML = `Firebase SDK loaded with ${features.join(', ')}`;
+          // let app = firebase.app();
+          // let features = ['auth', 'database', 'messaging', 'storage', 'firestore'].filter(feature => typeof app[feature] === 'function');
+          // document.getElementById('load').innerHTML = `Firebase SDK loaded with ${features.join(', ')}`;
         } catch (e) {
           console.error(e);
           document.getElementById('load').innerHTML = 'Error loading the Firebase SDK, check the console.';
