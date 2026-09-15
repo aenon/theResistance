@@ -1,48 +1,52 @@
-# theResistance
+# 阿瓦隆联机助手
 
-## Overview
-theResistance is a web application designed to enhance the gameplay experience of the board game "The Resistance: Avalon". This app provides players with tools and resources to facilitate game setup, track player roles, and manage game flow.
+《The Resistance: Avalon》的线下开黑工具。每人用自己的手机加入同一个房间，App 负责发牌、分发夜间信息、收投票、统计任务结果，桌上的人只管吵架。
 
-## Features
-- **Game Setup**: Easily configure the game with the number of players and roles.
-- **Role Management**: Assign and manage player roles dynamically during the game.
-- **Game Flow Tracking**: Keep track of the current round, votes, and outcomes.
-- **User-Friendly Interface**: Intuitive design for easy navigation and interaction.
+## 它解决什么
 
-## Getting Started
+- 不用再有人念流程词、喊闭眼睁眼，也不会念错顺序。
+- 身份牌只出现在自己手机上，旁边的人瞄不到。
+- 莫德雷德、奥伯伦这些"谁能看见谁"的规则由程序算，不靠记忆。
+- 组队投票同时揭晓，任务里的失败票只统计张数、不暴露是谁投的。
 
-### Prerequisites
-- Node.js (version 14 or higher)
-- npm (Node package manager)
+支持 5–10 人，可选角色：梅林、派西维尔、刺客、莫甘娜、莫德雷德、奥伯伦。
 
-### Installation
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/theResistance.git
-   ```
-2. Navigate to the project directory:
-   ```
-   cd theResistance
-   ```
-3. Install the dependencies:
-   ```
-   npm install
-   ```
+## 一局的流程
 
-### Running the Application
-To start the development server, run:
+建房 → 报名字 → 房主勾角色发牌 → 各自看牌（点一下才显示，扣牌后消失）→ 队长组队 → 全员投票、同时揭晓 → 上车的人匿名出成功/失败 → 五轮任务，三胜进入刺杀 → 亮身份复盘。
+
+## 开发
+
+需要 Node 22（见 `.nvmrc`）。
+
+```bash
+npm install
+npm run emulators   # 另开一个终端：Firebase 模拟器（需要 Java）
+VITE_USE_EMULATOR=true npm run dev
 ```
-npm start
+
+打开 `http://localhost:5173`，多开几个**不同的浏览器隐身窗口**就能模拟多个玩家（同一个窗口共用同一个匿名账号）。
+
+连真实 Firebase 项目时，复制 `.env.example` 为 `.env.local` 并填入控制台里的 Web 应用配置，Firebase 控制台需要打开 **Anonymous** 登录方式。
+
+```bash
+npm test     # 规则引擎单测
+npm run lint
+npm run build
+npm run deploy   # firebase deploy（Hosting + Firestore 规则）
 ```
-The application will be available at `http://localhost:3000`.
 
-## Usage
-- Open the application in your web browser.
-- Follow the on-screen instructions to set up a new game.
-- Use the provided tools to manage player roles and track the game progress.
+## 代码结构
 
-## Contributing
-Contributions are welcome! Please feel free to submit a pull request or open an issue for any suggestions or improvements.
+- `src/game/` — 纯函数规则引擎：人数配比、任务人数表、夜间可见性、胜负判定。不依赖 React，也不依赖 Firebase，单测都打在这一层。
+- `src/room/` — Firestore 数据模型、读写操作、订阅 hook。
+- `src/ui/` — 按阶段拆分的界面。
+- `firestore.rules` — 安全规则。
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+## 信任模型
+
+- **身份牌**存在 `rooms/{code}/private/{uid}`，规则限定只有本人能读，房主负责写入但读不了别人的。
+- **投票**存在子集合里，在投票阶段结束前只有本人能读，所以没法提前偷看风向。
+- **任务的失败票**用原子自增计数，数据库里只有张数，没有出牌人。
+- 房主的客户端负责推进阶段（揭晓投票、公布任务结果等），同桌的人本来就看得见房主在干什么。
+- "好人不能出失败票"是界面上禁用的，没有服务端强制——线下面对面玩，这层足够了。

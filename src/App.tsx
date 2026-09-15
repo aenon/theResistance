@@ -1,13 +1,18 @@
-import React from 'react';
+import { useHashCode, useUid } from './room/hooks'
+import { Home } from './ui/Home'
+import { RoomView } from './ui/RoomView'
+import { Hint, Screen } from './ui/kit'
 
-const App: React.FC = () => {
+export default function App() {
+  const uid = useUid()
+  const [code, setCode] = useHashCode()
+
+  if (code && uid) return <RoomView code={code} uid={uid} onLeave={() => setCode(null)} />
+  if (code && !uid)
     return (
-        <div>
-            <h1>The Resistance: Avalon Helper</h1>
-            <p>Welcome to the Resistance helper app! Use this tool to manage your game sessions.</p>
-            {/* Additional components and functionality will be added here */}
-        </div>
-    );
-};
-
-export default App;
+      <Screen>
+        <Hint>连接中……</Hint>
+      </Screen>
+    )
+  return <Home uid={uid} onEnter={setCode} />
+}

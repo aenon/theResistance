@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// The room document is common knowledge at the table. The two things that must
+// stay hidden are each player's card and the votes of a proposal that is still
+// being voted on, so those live in subcollections with their own rules.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{code} {
+      function room() {
+        return get(/databases/$(database)/documents/rooms/$(code)).data;
+      }
+      function signedIn() {
+        return request.auth != null;
+      }
+      function isPlayer() {
+        return signedIn() && request.auth.uid in resource.data.playerUids;
+      }
+
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid;
+      // Any player can push the shared state forward; the host client is the one
+      // that drives phase transitions.
+      allow update: if isPlayer()
+        || (signedIn() && resource.data.phase == 'lobby'
+            && request.resource.data.playerUids.hasAll(resource.data.playerUids));
+
+      match /private/{uid} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow write: if signedIn() && request.auth.uid == room().hostUid;
+      }
+
+      match /votes/{voteId} {
+        allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid;
+        allow read: if signedIn()
+          && (resource.data.uid == request.auth.uid || room().phase != 'vote');
+      }
+    }
+  }
+}
